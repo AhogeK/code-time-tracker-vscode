@@ -1,0 +1,30 @@
+# Development-only files — excluded from the published VSIX.
+.vscode/**
+.vscode-test/**
+out/**
+node_modules/**
+src/**
+**/tsconfig.json
+**/eslint.config.mjs
+**/*.map
+**/*.ts
+**/.vscode-test.*
+
+# Repo hygiene / contributor docs
+.gitignore
+.gitmessage
+.editorconfig
+.yarnrc
+esbuild.js
+CONTRIBUTING.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+
+# AI agent files — must never ship to end users
+AGENTS.md
+SKILL_GRAPH.md
+memory-bank/**
+.omp/**
+.agents/**
+.claude/**
+.opencode/**
