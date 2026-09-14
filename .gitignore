@@ -1,0 +1,19 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+
+# AI agent workspaces (AGENTS.md R19 protection)
+# memory-bank/ is deliberately NOT ignored — it is committed agent memory.
+.agents/
+.claude/
+.omp/
+.omo/
+.sisyphus/
+.gstack/
+.codegraph
+
+# Local workspace
+.env
+.env.local

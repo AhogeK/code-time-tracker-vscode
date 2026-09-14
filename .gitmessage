@@ -1,0 +1,42 @@
+# ----------------------------------------------------------
+# <type>(<scope>): <subject> (max 72 chars)
+#
+# <body> (explain WHAT changed and WHY, wrap at 72 chars)
+#
+# <footer> (refs, closes, breaking changes)
+# ----------------------------------------------------------
+#
+# Activate once per clone:
+#   git config commit.template .gitmessage
+#
+# Types:
+#   feat:     New feature
+#   fix:      Bug fix
+#   docs:     Documentation
+#   style:    Code style (formatting)
+#   refactor: Code refactoring
+#   perf:     Performance
+#   test:     Tests
+#   build:    Build/tooling/deps
+#   ci:       CI/CD
+#   chore:    Other (version bumps, housekeeping)
+#   revert:   Revert a previous commit
+#
+# Scope (optional): affected area, e.g.
+#   sync, server, tracker, storage, ui, commands, docs, memory-bank
+#
+# Subject: imperative mood, no trailing period, lowercase first letter ok
+#
+# Examples:
+#   feat(sync): implement pull loop with cursor persistence
+#   fix(storage): keep soft-deleted sessions out of local statistics
+#   docs(memory-bank): record sync engine design decisions
+#   chore(release): bump version to 0.1.0
+#
+# Footer tags:
+#   Closes: #123
+#   Fixes: #456
+#   BREAKING CHANGE: migration guide
+#
+# NEVER add AI attribution or co-author trailers.
+# ----------------------------------------------------------
