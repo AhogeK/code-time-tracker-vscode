@@ -10,7 +10,7 @@ Part of the **Code Time Tracker** family — a VS Code extension sharing the
 [ctt-web](https://github.com/AhogeK/ctt-web) dashboard with the
 [JetBrains plugin](https://github.com/AhogeK/code-time-tracker).
 
-> **Status: early development.** The extension is a scaffold at `v0.0.1` — it activates and
+> **Status: early development.** The extension is a scaffold at `v0.1.0` — it activates and
 > registers its commands, but tracking and statistics are not implemented yet. Follow the
 > milestones below, or watch the repository for the first functional release.
 
