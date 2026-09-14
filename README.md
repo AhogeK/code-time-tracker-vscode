@@ -1,72 +1,108 @@
-# code-time-tracker-vscode README
+# Code Time Tracker for VS Code
 
-This is the README for your extension "code-time-tracker-vscode". After writing up a brief description, we recommend including the following sections.
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.137.0%2B-blue.svg)](https://code.visualstudio.com/)
 
-## Features
+Automatic coding-time tracking and analytics for Visual Studio Code.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+Part of the **Code Time Tracker** family — a VS Code extension sharing the
+[ctt-server](https://github.com/AhogeK/ctt-server) backend and the
+[ctt-web](https://github.com/AhogeK/ctt-web) dashboard with the
+[JetBrains plugin](https://github.com/AhogeK/code-time-tracker).
 
-For example if there is an image subfolder under your extension project workspace:
+> **Status: early development.** The extension is a scaffold at `v0.0.1` — it activates and
+> registers its commands, but tracking and statistics are not implemented yet. Follow the
+> milestones below, or watch the repository for the first functional release.
 
-\!\[feature X\]\(images/feature-x.png\)
+## Why this exists
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+The JetBrains plugin tracks coding time where JetBrains IDEs run. This project brings the same idea
+to VS Code, and reports into the same account so a developer who uses both IDEs sees one unified
+picture in the web dashboard.
+
+## Planned features
+
+- **Automatic tracking** — records coding activity without manual input, with idle detection so
+  time away from the keyboard is not counted
+- **Local-first storage** — session data lives on your machine
+- **Status bar timer** — today / this week / this month / this year, updated live
+- **Statistics view** — project, language, and time-of-day breakdowns inside the editor
+- **Optional cloud sync** — connect a self-hosted ctt-server to sync sessions across devices, so
+  VS Code and JetBrains data land in the same account
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **VS Code** 1.137.0 or later
+- **ctt-server** *(optional)* — only needed for cloud sync. Local tracking does not require it.
 
-## Extension Settings
+## Development
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+```bash
+pnpm install
+pnpm run compile   # type check + lint + bundle
 
-For example:
+# press F5 in VS Code to launch an Extension Development Host
+```
 
-This extension contributes the following settings:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full setup, conventions, and PR process.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Project layout
 
-## Known Issues
+```
+src/
+├── extension.ts          # activate / deactivate entry point
+└── test/                 # Mocha tests, run inside a real VS Code host
+dist/                     # bundled output (generated)
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Related repositories
 
-## Release Notes
+| Repository                                                            | Role                                          |
+| --------------------------------------------------------------------- | --------------------------------------------- |
+| [ctt-server](https://github.com/AhogeK/ctt-server)                    | Backend — sync, statistics, leaderboard       |
+| [ctt-web](https://github.com/AhogeK/ctt-web)                          | Web dashboard                                 |
+| [code-time-tracker](https://github.com/AhogeK/code-time-tracker)      | JetBrains plugin                              |
+| **code-time-tracker-vscode**                                          | VS Code extension (this repository)           |
 
-Users appreciate release notes as you update your extension.
+## Milestones
 
-### 1.0.0
+- [x] Repository initialized
+- [ ] Local tracking core — activity capture, idle detection, session splitting
+- [ ] Statistics and status bar
+- [ ] Local storage layer
+- [ ] Cloud sync with ctt-server
 
-Initial release of ...
+## Contributing
 
-### 1.0.1
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first, and note that this
+project is released with a [Code of Conduct](CODE_OF_CONDUCT.md) — by participating you agree to
+abide by its terms.
 
-Fixed issue #.
+## Security
 
-### 1.1.0
+Please report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
-Added features X, Y, and Z.
+## License
 
----
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
-## Following extension guidelines
+## Contact
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+**Maintainer**: AhogeK · **GitHub**: [@AhogeK](https://github.com/AhogeK) ·
+**Website**: [ahogek.com](https://www.ahogek.com)
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+<div align="center">
 
-## Working with Markdown
+## 💖 Support This Project
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?style=plastic&logo=ko-fi&logoColor=white)](https://ko-fi.com/ahogek)
+&nbsp;&nbsp;
+[![Afdian](https://img.shields.io/badge/爱发电-946ce6?style=plastic&logo=github-sponsors&logoColor=white)](https://afdian.net/a/AhogeK)
+&nbsp;&nbsp;
+[![Solana](https://img.shields.io/badge/Solana-14F195?style=plastic&logo=solana&logoColor=white)](https://solscan.io/account/55XnqvGKwH6LamJB7tSwUbrmJikEU2zwP3k1FjsdyEys)
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+<p align="center">
+Made with ❤️ for developers who value your time
+</p>
 
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
-# code-time-tracker-vscode
+</div>
