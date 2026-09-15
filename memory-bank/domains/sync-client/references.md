@@ -1,7 +1,9 @@
 # sync-client — references
 
-> 事实来自 `../ctt-server` 源码（v0.72.0）与 `../code-time-tracker` 的已实现客户端。
-> **Base URL 含 `/ctt-server` 上下文路径。**
+> 来源：`../ctt-server` 源码 v0.72.0 + `../code-time-tracker` 文件树（路径已逐个核对）
+> 最后确认：2026-09-15 ｜ 适用范围：同步端点 / DTO / 错误码 / 参考实现 ｜ 状态：**已核实**
+
+**Base URL 含 `/ctt-server` 上下文路径。**
 
 ## 端点
 

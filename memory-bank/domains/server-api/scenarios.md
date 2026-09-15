@@ -1,5 +1,8 @@
 # server-api — scenarios
 
+> 来源：`../ctt-server` 源码 + `ErrorCode.java` 注册表 + `application.yaml`
+> 最后确认：2026-09-15 ｜ 适用范围：调用服务端时的触发→判断→动作 ｜ 状态：**已核实**
+
 触发 → 判断 → 动作。
 
 ## 接入一个新端点

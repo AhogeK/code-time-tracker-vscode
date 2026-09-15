@@ -1,5 +1,8 @@
 # ai-workflow — practices
 
+> 来源：本仓库工具链**实测**（pnpm / tsc / eslint / esbuild / @types/vscode）+ `../ctt-web` 的实践集
+> 最后确认：2026-09-15 ｜ 适用范围：可直接照做的命令、参数与坑 ｜ 状态：**已核实**
+
 ## 提交形态（R7）
 
 ```

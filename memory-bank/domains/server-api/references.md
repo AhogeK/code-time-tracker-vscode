@@ -1,8 +1,10 @@
 # server-api — references
 
-> 全部事实来自 `../ctt-server` **源码**（非文档转抄）。服务端 v0.72.0，Spring Boot 4.1.1，
-> Java 25。**Base URL 含 servlet context path `/ctt-server`**：
-> `http://host:8080/ctt-server/api/v1/...`（`application.yaml:60`）
+> 来源：**`../ctt-server` 源码 v0.72.0**（逐条核对；文档与源码不一致处已标注，共 8 处）
+> 最后确认：2026-09-15 ｜ 适用范围：端点 / 错误码 / 信封 / 漂移表 ｜ 状态：**已核实**
+
+服务端 Spring Boot 4.1.1，Java 25。**Base URL 含 servlet context path `/ctt-server`**：
+`http://host:8080/ctt-server/api/v1/...`（`application.yaml:60`）
 
 ## 认证
 

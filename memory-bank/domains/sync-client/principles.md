@@ -1,5 +1,8 @@
 # sync-client — principles
 
+> 来源：`../ctt-server` 的 `ConflictResolver` / `SyncPullService` / `SyncPushService` / `SyncCursorRepository`
+> 最后确认：2026-09-15 ｜ 适用范围：同步引擎的不变量 ｜ 状态：**已核实**
+
 ## P1. 会话只有一个入口，且服务端是唯一权威
 
 会话进入服务端**只能**经 `POST /api/v1/sync/push`。没有直接写入端点、没有导入端点、

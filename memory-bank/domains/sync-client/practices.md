@@ -1,5 +1,8 @@
 # sync-client — practices
 
+> 来源：`../ctt-server` 源码 + `../code-time-tracker` 的 `SyncCoordinator` / `SyncSessionApplier` / `SYNC-CORE-DESIGN.md`
+> 最后确认：2026-09-15 ｜ 适用范围：同步循环与状态机的具体做法 ｜ 状态：**已核实**
+
 ## 同步循环（一轮）
 
 ```

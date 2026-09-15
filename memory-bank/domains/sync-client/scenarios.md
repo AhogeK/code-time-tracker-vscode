@@ -1,5 +1,8 @@
 # sync-client — scenarios
 
+> 来源：`../ctt-server` 源码 + `../code-time-tracker/.omp/delivery-report-*.md` 的实测结论
+> 最后确认：2026-09-15 ｜ 适用范围：同步问题的诊断路径 ｜ 状态：**已核实**
+
 触发 → 判断 → 动作。
 
 ## 实现 / 修改同步主流程

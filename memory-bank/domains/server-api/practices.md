@@ -1,5 +1,8 @@
 # server-api — practices
 
+> 来源：`../ctt-server` 源码 + `docs/time-strategy.md` + `docs/api-governance.md`
+> 最后确认：2026-09-15 ｜ 适用范围：具体调用做法与参数易错点 ｜ 状态：**已核实**
+
 ## HTTP 客户端的形状（待实现时对齐）
 
 唯一的 HTTP 边界集中在一个模块里，业务代码不直接 `fetch`：

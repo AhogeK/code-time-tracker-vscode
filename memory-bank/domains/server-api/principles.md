@@ -1,5 +1,8 @@
 # server-api — principles
 
+> 来源：`../ctt-server` 源码（`StatsCalculator`、`StatsService`、`GlobalExceptionHandler`、`ErrorCode`）
+> 最后确认：2026-09-15 ｜ 适用范围：消费服务端时的裁决依据 ｜ 状态：**已核实**
+
 ## P1. 源码是契约；文档是线索
 
 `../ctt-server` 的**源码**是唯一权威。文档（含其 memory-bank 领域文件、`dev-docs/`）

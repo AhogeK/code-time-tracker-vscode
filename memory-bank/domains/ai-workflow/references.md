@@ -1,5 +1,8 @@
 # ai-workflow — references
 
+> 来源：本仓库配置实测（`package.json` / `tsconfig.json` / `esbuild.js` / `.vscode-test.mjs`）+ git 实际状态
+> 最后确认：2026-09-15 ｜ 适用范围：事实性查表 ｜ 状态：**已核实**
+
 ## 记忆与文档布局
 
 | 位置 | 内容 | 提交？ |
