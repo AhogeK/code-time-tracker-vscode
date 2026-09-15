@@ -61,38 +61,67 @@ out/                      # 测试编译产物（gitignore）
 - `.vscodeignore` 已排除 `src/**`、`**/*.ts`、`**/*.map`——发布包只含 `dist/` 与元数据
 - `.npmrc` 有 `enable-pre-post-scripts = true`；`pnpm-workspace.yaml` 有 `allowBuilds: esbuild: true`
 
-## 已决（2026-09-14，用户确认）
+## 已决
+
+> 来源：用户确认（2026-09-14）+ ctt-server 后端方向转达（2026-09-15）
+> ｜ 最后确认：2026-09-15 ｜ 适用范围：本地存储与数据边界 ｜ 状态：**已核实**
 
 | 议题 | 决定 | 依据 |
 |---|---|---|
-| **本地存储** | 与 `../code-time-tracker` **同一方案、同一个库、数据共通** —— SQLite 单文件，schema 与其对齐 | 用户指示；两个 IDE 共享同一份本地数据，避免重复统计 |
-| **语义对齐** | 统计口径**照 JetBrains 插件对齐**；后续必须建立**编程语言字典**并做跨端同步对齐 | 用户指示；语言名不一致会让 `LANGUAGES` 维度分裂成两个桶 |
-| **本地统计** | 插件端**也做**与 JetBrains 插件类似的 IDE 端独立统计 | 用户指示；本地视图不依赖服务端可用性 |
+| **本地存储** | 与 `../code-time-tracker` **同一个 SQLite 文件**，数据共通；**schema 由插件端独占管理** | 用户指示（2026-09-14）+ 后端方向（2026-09-15） |
+| **语言字段** | **发送 VS Code 原生 `document.languageId`**（如 `typescript`）**原样**，不做大小写转换、不做命名美化；归一化由 ctt-server 统一承担 | 后端方向（2026-09-15） |
+| **本地统计** | 插件端**也做**与 JetBrains 插件类似的 IDE 端独立统计 | 用户指示（2026-09-14） |
 
-**由「同一个库」直接推出的强制后果**：
+### 语言字段：两端各持一套规则必然漂移
+
+**本插件不做任何语言归一化。** 具体含义：
+
+| 层 | 做什么 |
+|---|---|
+| 采集 | 取 `document.languageId` 的**原始值** |
+| 发送 | 把原始值原样放进 `SyncSessionDto.language` |
+| 本地库 | 存**原生值**（与插件端写入的值各自独立，见下） |
+| 展示 | **展示时才归一化**，不是在写入时 |
+| 归一化本身 | **服务端拥有**：以 GitHub Linguist 规范名归一化，并回填历史数据 |
+
+**为什么不能在本地做**：服务端会按 Linguist 规范名归一化并回填历史；两端各持一套映射规则，
+**必然漂移**。等对接文档的同时，本插件的正确做法是「什么都不知道，只管原样发送」。
+
+**词表快照**：格式与对接细节**待服务端实现落地后由后端提供完整对接文档**
+（状态：待确认 —— 未收到文档前不得自行设计格式）。
+
+### 由「同一个库」推出的强制后果
 
 1. **数据库路径已核实**（`../code-time-tracker` 的 `util/PathUtils.kt`）：
    本机为 `~/.config/code-time-tracker/coding_data.db`（macOS/Linux 用 `~/.config/code-time-tracker/`，
    Windows 用 `%APPDATA%\code-time-tracker\`）。**文件已存在且有真实数据**（约 1.9 MB）。
    本仓库必须指向**同一个文件**，不得自建
-2. **schema 必须与插件端逐列对齐** —— 现有表：`coding_sessions`（+3 索引
-   `idx_sessions_time_range` / `idx_sessions_min_time` / `idx_sessions_sync_state`）、
-   `app_user`、`sync_cursor`。详见 `../code-time-tracker/src/main/kotlin/com/ahogek/codetimetracker/database/MigrationManager.kt`
-3. **并发写入**：两个 IDE 可能同时打开同一 SQLite 文件，必须按 SQLite 锁语义设计
-   （WAL 模式 + 忙等待重试），且**任何 schema 变更都要与插件端同步**，不能单方面迁移
-4. **`sessionUuid` 是跨端会话身份**：两端生成的会话必须用同一套 UUID 规则，
+
+2. **schema 变更权归插件端所有** —— 本插件**不得迁移、不得新增列、不得改约束**。
+   现有表：`coding_sessions`（+3 索引 `idx_sessions_time_range` / `idx_sessions_min_time` /
+   `idx_sessions_sync_state`）、`app_user`、`sync_cursor`。
+   定义见 `../code-time-tracker/src/main/kotlin/com/ahogek/codetimetracker/database/MigrationManager.kt`
+
+   **需要新列时**：走需求报告给插件端（R3），**不自行加**。两端各自迁移 = schema 漂移，
+   而漂移的代价是**两个 IDE 读到对方的库时崩溃或静默丢数据**。
+
+3. **本地库只存原生值** —— 归一化一律推到展示时进行。写入时归一化会使原始事实不可恢复，
+   且与服务端的回填结果打架
+
+4. **并发写入**：两个 IDE 可能同时打开同一 SQLite 文件，必须按 SQLite 锁语义设计
+   （WAL 模式 + 忙等待重试）
+
+5. **`sessionUuid` 是跨端会话身份**：两端生成的会话必须用同一套 UUID 规则，
    否则同步时同一会话会被当成两条
-5. **本地统计与服务端统计是两套实现**：服务端为权威（plugin parity），本地是近似 ——
+
+6. **本地统计与服务端统计是两套实现**：服务端为权威（plugin parity），本地是近似 ——
    本地实现必须复刻 JetBrains 的桶边界（见 `domains/server-api/principles.md` P4/P7）
-6. **语言字典是关键对齐面**：语言标识需与插件端使用同一套命名
-   （如 `TypeScript` 而非 `typescript`），否则语言分布会分裂
 
 **尚需细化（实现前必须先确认）**：
 
 - SQLite 接入方式（`node:sqlite` 内置 / `better-sqlite3` 原生模块 / WASM）—— 涉及打包体积与原生依赖，属 R14 依赖决策
-- 数据库文件路径（插件端已有固定位置，本仓库必须指向**同一个文件**而非自建）
-- 语言字典的具体形态（内置表 / 从 VS Code `languageId` 映射 / 双向同步机制）
 - 空闲检测阈值与插件端是否一致（影响会话切分口径）
+- 语言词表快照的对接（**等后端文档**，见上）
 
 ## 依赖变更记录
 

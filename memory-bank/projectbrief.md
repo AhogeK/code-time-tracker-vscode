@@ -17,7 +17,7 @@ VS Code 扩展：自动追踪编码时间并提供统计分析。与 `../code-ti
 | 需求里的说法 | 本项目的确定含义 | **易混的其它含义** |
 |---|---|---|
 | 「记录一条时间」「编码时长」 | 一条 `coding_sessions` 记录，跨越 `startTime`→`endTime`（排除空闲的空档） | VS Code 的窗口会话；插件的统计口径 |
-| 「语言统计」 | 按 `language` 字段聚合的**语言分布** | VS Code 的 `languageId`（`typescript`）——**命名与大小写都不同**，跨端不统一就会分裂成两个桶 |
+| 「语言统计」 | 按 `language` 字段聚合的**语言分布**；本仓库**原样发送** `document.languageId`（`typescript`），归一化由服务端按 Linguist 规范名统一承担 | 「本地先美化语言名」——**不允许**：两端各持一套规则必然漂移 |
 | 「设备」 | ctt-server 注册表里的一条记录，由客户端生成的 UUID 标识 | 一台物理机器；VS Code 的一次安装；插件的 `app_user` |
 | 「统计」「数据」 | 服务端聚合出的**权威**数值；本扩展另有**本地独立统计**，两者允许不等 | 把两者当成同一份数据去做对账 |
 | 「同步」「云端」 | 把本地会话推到自建 ctt-server、并拉回权威状态（默认关闭） | 备份；跨端实时协作 |
@@ -66,9 +66,10 @@ VS Code 扩展：自动追踪编码时间并提供统计分析。与 `../code-ti
 - **IDE 归因**：同步协议**不携带每会话的 IDE 名称**，IDE 维度来自设备注册时的 `ideName`。
   因此必须注册独立 `deviceId`，否则与同机 JetBrains 插件混为一个桶
 - **本地库与插件端共用**：SQLite 文件 `~/.config/code-time-tracker/coding_data.db` 与
-  `../code-time-tracker` 是**同一个**，schema 必须逐列对齐，两端可能并发写
-- **统计语义照 JetBrains 对齐**：语言标识等需与插件端一致（需建语言字典），
-  否则同一门语言会分裂成两个桶
+  `../code-time-tracker` 是**同一个**；**schema 变更权归插件端独占**——本插件不迁移、不加列，
+  需要新列时走需求报告；本地库**只存原生值**，两端可能并发写
+- **语言字段原样发送**：发 `document.languageId` 的原始值，**不做大小写转换、不做命名美化**；
+  归一化（GitHub Linguist 规范名 + 历史回填）由服务端统一承担。**本地不得自建映射表**
 - **只读关联项目**：`ctt-server` / `ctt-web` / `code-time-tracker` 一律只读（AGENTS.md R3）
 
 ## 里程碑
@@ -77,6 +78,6 @@ VS Code 扩展：自动追踪编码时间并提供统计分析。与 `../code-ti
 - [x] AI 协作架构（AGENTS.md + memory-bank + SKILL_GRAPH.md）—— 状态与明细见 `progress.md`
 - [x] 非 AI 项目内容（README / CONTRIBUTING / Code of Conduct / SECURITY / LICENSE）
 - [ ] 本地追踪核心（活动监听 + 空闲检测 + 会话切分）
-- [ ] SQLite 对接（与插件端同一个库）
+- [ ] SQLite 对接（与插件端同一个库；**只读 schema，不迁移**）
 - [ ] 统计与状态栏
 - [ ] 云同步（依赖上述全部）

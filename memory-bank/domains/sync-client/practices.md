@@ -56,13 +56,22 @@ change 里读到。
 ```
 sessionUuid      string(uuid)  客户端生成，每用户唯一
 projectName      string        非空
-language         string        非空
+language         string        非空 —— 原样发送，禁止本地归一化
 startTime        string(ISO)   UTC，带 Z
 endTime          string(ISO)   UTC，带 Z
 clientModifiedAt string(ISO)   LWW 输入
 clientVersion    number        ≥0，每次本地修改递增
 deleted          boolean       软删除标记
 ```
+
+**`language` 的客户端义务（红线）**：发送 `document.languageId` 的**原始值**（如 `typescript`）。
+
+- ❌ **不做大小写转换、不做命名美化**（不要发 `TypeScript`）
+- ❌ **不自建映射表**，不查本地词表
+- ✅ 归一化**由服务端承担**：按 GitHub Linguist 规范名归一化，并**回填历史数据**
+
+理由：服务端会在归一化后回填历史；两端各持一套映射规则**必然漂移**。
+本地做什么都是错的——**唯一正确的动作是什么都不做，原样转发**。
 
 **不要发送**：时长/秒数、设备名、IDE 名、时区、偏移 —— 服务端自行推导或从注册信息取。
 

@@ -38,7 +38,7 @@
 | 信封 | 成功响应外层 `RestApiResponse{success,message,data,timestamp}` | 「返回体」「响应」 | **错误体** `ErrorResponse` —— 形状不同，没有 `success`/`data` |
 | 错误码位置 | code 出现在 JSON 的哪一层 | 「错误码」 | **`$.code` 与 `$.data.code` 是两条路径**：处理器路径在前者，过滤器路径在后者；只读一个会在「凭据坏了」时拿到 `undefined` |
 | 统计 | 服务端聚合出来的权威数值 | 「数据」「报表」 | **本地近似值** —— 本仓库自己算的那份，两者**允许不等**（P7） |
-| 语言 | 服务端 `language` 字段的取值 | 「语言」 | **VS Code `languageId`**（`typescript`）—— 命名与大小写都不同，是本项目已知的跨端对齐风险 |
+| 语言 | 服务端 `language` 字段的取值 | 「语言」 | **发送时是原生 `languageId`**（`typescript`）—— **不得在本地做大小写转换或命名美化**；归一化由服务端按 GitHub Linguist 规范名统一承担并回填历史（见 `practices.md`） |
 | 时区参数 | `timezoneOffset`，**UTC 以东的分钟数** | 「时区」「zone」 | 时区名（`Asia/Shanghai`）、偏移字符串（`+08:00`）—— 都**不可用** |
 | plugin parity | 口径由插件定义、**服务端为裁决者** | 「一致性」 | **「两端数字必须相等」不是它的含义** —— 类别维度本就允许不等（P4） |
 | merge / accumulate / average | 三类时长语义 | 「时长」 | 三者**不可互相比较**；把 accumulate 归一化成 merge 是缺陷，不是修复 |
