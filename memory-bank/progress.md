@@ -17,6 +17,71 @@
 
 ## 已完成
 
+### 术语碰撞与「回填」更正（2026-09-16，第六轮）
+
+**触发**：用户指出 `server-api/scenarios.md` 的「不要归一化」与同领域 P10 的「归一化」是两个
+互不相干的含义，而该行恰好含「语言」，会被读成「语言不要归一化」——与 P10 直接冲突。
+
+**全库排查**（42 处「归一」）：用**时长语义**的只有 2 处，其中 `meta.md` 已消歧、
+`scenarios.md` 那处有歧义。**但排查还发现第二处同类碰撞**：`sync-client/principles.md`
+P10 的表格列头写作「谁做归一化」，却同时覆盖语言、时长、时区、schema 四行。
+
+| 位置 | 处理 |
+|---|---|
+| `server-api/scenarios.md` | 改为「**不要按 merge 口径合并时长**」，并注明本行说的是时长语义、与 P10 无关 |
+| `server-api/meta.md` | **把「归一化」这个词本身登记进消歧表**：两个含义并列，标注「本领域禁止裸用」 |
+| `sync-client/principles.md` | 表格列头改为中性的「谁负责转化」；P10 末尾加术语提醒并指向消歧表 |
+
+**顺手更正一处事实偏差**：此前多处写「归一化并**回填历史数据**」，而源码显示是
+**读取时归一化**（`StatsCalculator` 查询期），列里始终存原样值——历史数据不是被改写，
+而是每次查询时被重新解释。已在 5 个文件统一更正，`progress.md` 保留更正溯源。
+
+**教训**：术语碰撞不会只出现在一处。**修一处必须全库搜同一个词**——这次搜出第二处
+（P10 表格列头），否则下次仍会被误读。
+
+**状态**：✅ 完成。**待授权提交**。
+
+### 语言归一化：源码核实（2026-09-16，第五轮）
+
+后端告知 ctt-server 已实现跨端语言归一化（v0.74.1+）。按 R31 **回源核对**——直接读服务端源码，
+把这条从「方向转达」升格为「源码已核实」。
+
+**核实结果**（`../ctt-server/src/main/java/com/ahogek/cttserver/language/`）：
+
+| 项 | 事实 |
+|---|---|
+| 实现 | `LanguageVocabulary`（`@Component`）+ `CanonicalLanguage` + `LanguageType` |
+| 词表 | 资源文件 `resources/language/vocabulary.json`，`version: 1`，92 规范名 / 75 别名 / 76 非语言值 |
+| 匹配 | `strip().toLowerCase()` —— **大小写与首尾空白都不敏感** |
+| 三种结局 | 已知非语言 → `Other`；已知语言 → 规范名 + 类型；**未识别 → 原样保留 + `recognized=false` + WARN，不并入 `Other`** |
+| 发生时机 | **读取时**（`StatsCalculator.languageDistribution` 查询期），列里始终是原样值 |
+| HTTP 暴露 | **无端点**；`unmappedValues()` 有意不公开（全局集合 vs 按用户隔离的读接口） |
+
+**跑通服务端算法后的对照**（用户给的示例全部验证通过）：
+
+```
+typescript / TypeScript / TYPESCRIPT  →  TypeScript
+java / JAVA                            →  Java
+kotlin / Kotlin / KOTLIN               →  Kotlin
+ignore(VS Code) / GitIgnore file(JB)   →  Ignore List   ← 跨端分歧被合并
+shellscript                            →  Shell
+textmate / ARCHIVE                     →  Other（已知非语言）
+```
+
+**schema 无变更**（已核实）：`coding_sessions.language` 仍是 `VARCHAR(50) NOT NULL`，
+迁移目录无新增，与后端「本次无需协调迁移」的说法一致。
+**归一化在读取时发生，所以历史数据无需回填** —— 这解释了为什么不需要迁移。
+
+**落地位置**：`techContext`（升级为源码核实 + 对照表）、`sync-client/practices`（对照表 +
+「未识别值安全」）、`server-api/principles`（**新增 P10**）、`server-api/references`（代码映射 +
+版本溯源）、`activeContext`。
+
+**教训**：这条最初只是「方向转达」，转达与核实之间隔着一层——核实后才发现
+「历史回填」实际是**读取时归一化**的副作用，而非一批 UPDATE 语句。
+**方向性描述能定调，但只有源码能定性**。
+
+**状态**：✅ 完成。**待授权提交**。
+
 ### 接收后端方向并就地改正漂移（2026-09-15，第四轮）
 
 ctt-server 后端转达三条方向，其中**第一条推翻了本仓库此前记录的一条判断**。按 R31
@@ -24,7 +89,7 @@ ctt-server 后端转达三条方向，其中**第一条推翻了本仓库此前�
 
 | # | 后端方向 | 改正内容 |
 |---|---|---|
-| 1 | **语言字段发原生值**：发 `document.languageId`（`typescript`），不转换不美化；归一化由服务端（GitHub Linguist 规范名 + 回填历史） | 此前写的是「须与插件端使用同一套命名，需建语言字典」——**错的**。已改为「原样转发，本地不得自建映射表」 |
+| 1 | **语言字段发原生值**：发 `document.languageId`（`typescript`），不转换不美化；归一化由服务端（GitHub Linguist 规范名） | 此前写的是「须与插件端使用同一套命名，需建语言字典」——**错的**。已改为「原样转发，本地不得自建映射表」 |
 | 2 | **schema 由 JetBrains 插件统一管理** | 此前写的是「schema 必须逐列对齐 / 变更要与插件端同步」——不够硬。已改为「**变更权归插件端独占**，本插件不迁移、不加列、不改约束；需要新列走需求报告」 |
 | 3 | 词表快照格式待后端提供对接文档 | 记为 `待确认`；**收到文档前不得自行设计格式** |
 
@@ -76,42 +141,29 @@ ctt-server 后端转达三条方向，其中**第一条推翻了本仓库此前�
 
 ### 初期完善（2026-09-14，第二轮）
 
-- **移除 `.opencode/`**：该命令机制是 `../code-time-tracker` 早期产物，当前工具链不再需要；
-  同步清理 `AGENTS.md` / `.gitignore` / 领域文件中的全部引用。会话初始化改由 R1 直接约束
-- **重建 `SKILL_GRAPH.md`**：旧索引（源自 ctt-web）有 **68 个幽灵条目**，且所列「内置技能」
-  在当前 harness 中不存在。经用户授权后**从文件系统重新测绘**：
-  `~/.agents/skills/` 368 + `~/.config/opencode/skills/` 64 = **432（去重后）**，
-  按能力分 30 类，描述取自技能自身 `description` 字段。
-  校验：零幽灵、零遗漏，分类计数与行数全部自洽
-- **新增 R30**：把「只列真实存在的技能」固化为规则（禁幽灵、`~/.claude/` 不重复计数、
-  描述不得编造、计数自洽 + 可重跑的 `comm` 校验命令）
-- **补齐非 AI 项目内容**：`README.md`（重写，原为模板残留 + 重复 H1）、`CONTRIBUTING.md`、
-  `CODE_OF_CONDUCT.md`（Contributor Covenant 2.0）、`SECURITY.md`（含本仓库范围界定）、
-  `LICENSE`（**MIT**，用户选定）、`CHANGELOG.md`
-- **记录三项架构决策**到 `techContext.md`「已决」：与插件端**同一个 SQLite 库**（路径已核实
-  `~/.config/code-time-tracker/coding_data.db`，含真实数据）、**统计语义照 JetBrains 对齐**、
-  **插件端做独立本地统计**。*（语言对齐细节于第四轮被后端方向更正。）*
+- **移除 `.opencode/`**：插件端早期机制，当前工具链不需要；会话初始化改由 R1 约束。
+  **本仓库永久不设该目录**
+- **重建 `SKILL_GRAPH.md`**：旧索引有 68 个幽灵条目 + 不存在的「内置技能」。从文件系统重新测绘
+  **432 个技能**（`~/.agents/skills` 368 + `~/.config/opencode/skills` 64），按能力分 30 类，
+  描述取自技能自身 `description`。零幽灵、零遗漏；新增 **R30** 治理
+- **补齐非 AI 内容**：`README.md`（重写）、`CONTRIBUTING.md`、`CODE_OF_CONDUCT.md`、
+  `SECURITY.md`、`LICENSE`（**MIT**）、`CHANGELOG.md`
+- **三项架构决策**记入 `techContext.md`「已决」（语言对齐细节于第四轮被后端方向更正）
 
 ### AI 协作架构（2026-09-14，第一轮）
 
-- **研究阶段**：5 个子 agent 并行调查 —— `../ctt-server`（AI 架构 + 同步/认证契约 + 统计契约，
-  含源码级验证）、`../ctt-web`（AI 架构）、`../code-time-tracker`（AI 架构 + 产品与数据模型）
-- **规则集**：`AGENTS.md` 规则集（现为 **R1–R31**，**按数字顺序排列**），技术规范集中在 R9，
-  语言边界明确化（代码/用户文档英文，AI 文件中文），领域知识库由 R29 治理
-- **记忆库**：时间线层 5 文件 + 领域层 3 领域 × 5 件套（`ai-workflow` / `sync-client` / `server-api`）
-- **工作流**：`.omp/`（含 `README.md` 权威说明）、`.editorconfig`、`.gitmessage`
-- **规避的兄弟仓库缺陷**（研究阶段发现，本仓库不复制；**未修改关联项目**）：
-  1. 兄弟仓库的 R5「记忆与代码同 commit」与 R6.5「AI 内容单独提交」自相矛盾 → 本仓库拆为
-     「R5 管时序、R7 管粒度」两条，互不重复
-  2. 规则编号物理乱序（ctt-server R23–R26 插在 R13 后）→ 本仓库按序
-  3. 规则集混入不可移植的构建系统专属条款 → 本仓库 R9 内聚
-  4. 手工维护的 `SKILL_GRAPH.md` 已漂移 → 本仓库重建并新增 R30 治理（第二轮完成）
-  5. `.opencode/` 忽略语义陷阱 → 本仓库直接不使用该机制（第二轮移除）
-- **服务端契约结论落库**：`sync-client` 与 `server-api` 两个领域文件记录了从源码验证的
-  8 处「文档 vs 源码」不一致（详见 `domains/server-api/references.md`）
-- **双轴独立审查**（逻辑 + 风格，互相不可见）：首轮均 FAIL，3 个 blocker + 多项 major 已逐条
-  核实并修复 —— 含 push 游标误用、R6 自检死锁、领域层缺编号规则（促生 R29）、
-  两个不存在的标识符。审查记录见 `.omp/plans/ai-architecture-plan.md`
+- **研究**：5 个子 agent 并行调查三个兄弟仓库（AI 架构 + ctt-server 同步/认证/统计契约，含源码级验证）
+- **规则集**：`AGENTS.md`（现为 **R1–R31**，按数字顺序），技术规范集中在 R9，
+  语言边界明确（代码/用户文档英文，AI 文件中文）
+- **记忆库**：时间线 5 文件 + 领域层 3 领域 × 5 件套
+- **契约落库**：`sync-client` / `server-api` 记录从源码验证的 **8 处「文档 vs 源码」不一致**
+- **双轴独立审查**（逻辑 + 风格，互相不可见）：首轮均 FAIL，3 个 blocker 全部修复 ——
+  push 游标误用（会导致永不收敛）、R6 自检死锁、领域层缺编号规则（促生 R29）
+- **规避的兄弟仓库缺陷**（**未修改关联项目**）：R5/R6.5 自相矛盾 → 本仓库拆为「R5 管时序、
+  R7 管粒度」；规则编号乱序 → 按序；构建系统专属条款混入规则集 → 收进 R9；
+  `SKILL_GRAPH.md` 漂移 → 重建并加 R30；`.opencode/` 忽略陷阱 → 不使用该机制
+
+*完整决策、审查记录与已否决方案见 `.omp/plans/ai-architecture-plan.md`。*
 
 ### 仓库初始化（2026-09-14）
 
@@ -126,7 +178,6 @@ ctt-server 后端转达三条方向，其中**第一条推翻了本仓库此前�
 ## Backlog
 
 - `docs/` 面向用户文档（扩展使用手册、同步故障排查）—— 功能落地后再写
-- `.vsc-extension-quickstart.md` 是模板残留，可在首次发版前删除或改写
 
 ## 未决（需用户决策）
 
