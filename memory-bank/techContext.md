@@ -49,7 +49,7 @@ out/                      # 测试编译产物（gitignore）
 
 ## 版本信息
 
-- `version`：`0.0.1`（`package.json` 单一来源）
+- `version`：`0.1.0`（`package.json` 单一来源）
 - `CHANGELOG.md` 同步维护
 - 版本规则见 AGENTS.md R17
 

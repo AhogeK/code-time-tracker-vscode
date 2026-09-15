@@ -6,7 +6,7 @@
 ## Current Status
 
 - **阶段**：初期完善（脚手架 + AI 架构 + 项目文档），**尚无业务功能**
-- **版本**：`0.0.1`（`package.json`）
+- **版本**：`0.1.0`（`package.json`）
 - **分支**：`develop`（AI 工作分支；`master` 为发布分支，保持无 AI 文件）
 - **验证**：`pnpm run compile` 通过（tsc + eslint + esbuild，0 error 0 warning）
 
@@ -29,106 +29,84 @@
 
 ---
 
-## [2026-09-14] 初期完善（第二轮）
+## [2026-09-15] 知识库体系升级（对齐业界实践）
 
-### 移除 `.opencode/`
+参照一篇关于「让 AI 理解复杂存量系统」的实践文章（知识库建设部分），对照本仓库现状后发现五处缺口，
+逐项补齐。文章的核心判断：**知识应先对齐「领域」而不是先上 RAG**——检索解决「找出可能相关内容」，
+不解决「AI 是否已拿到做出完整工程判断所需的知识集合」。
 
-`.opencode/commands/` 的 boot/save 是 `../code-time-tracker` 早期使用的机制，用户当前工具链
-（oh-my-opencode / omp）不再需要。**已删除整个 `.opencode/` 目录**，并同步清理：
+### 1. 渐进式披露：四层阅读路径（此前缺失）
 
-- `AGENTS.md` 全部 `.opencode/` 引用 → 改为 `SKILL_GRAPH.md` 或删除
-- `.gitignore` 移除 opencode 生成物忽略块
-- `ai-workflow/{meta,references}.md` 的 owned paths / 布局表
+`domains/README.md` 新增四层路径（**业务 → 架构 → 系统 → 基建**），并写明「不要跳层」。
+R1 从「读文件」升级为「按路径推进」。**这是本次最重要的改动**：此前 AI 只能自己猜先读什么，
+而「没确认需求说的是什么就 grep 代码」正是「局部正确、整体错误」的主要来源。
 
-会话初始化改由 **R1** 直接约束（先读 `AGENTS.md` → `memory-bank/` → 识别领域），不走命令文件。
+### 2. 事实回源裁决表（此前只有个例，无通则）
 
-### 新增 SKILL_GRAPH.md（重建，非沿用）
+`domains/README.md` 新增按事实类型的权威来源表（ctt-server 行为 → 源码；本地库 schema →
+插件端 `MigrationManager.kt`；产品意图 → **用户确认的结论**；历史原因 → 领域 `practices`），
+并升格为 **R31**。红线：不得因代码实现了某行为就当它是正确的业务规则，也不得因旧文档写过某设计
+就忽略代码已变。
 
-旧索引（源自 ctt-web）有 **68 个幽灵条目**——列了本机不存在的技能，且「内置技能」列表
-（playwright / frontend / git-master 等）在当前 harness 中**根本不存在**。
+### 3. 元数据契约：来源 / 最后确认 / 适用范围 / 状态（此前完全没有）
 
-本次**从文件系统重新测绘**（用户明确授权）：
+**这是最危险的缺口**——领域文件此前无法判断新鲜度，过期知识会以「看起来很可信」的方式误导。
+15 个领域文件全部补上页头，状态三选一：`已核实` / `待确认` / `已过时`；
+`待确认` **不得静默升级为领域事实**。
 
-| 来源 | 路径 | 数量 |
-|---|---|---|
-| 用户技能 | `~/.agents/skills/<name>/SKILL.md` | 368 |
-| opencode 技能 | `~/.config/opencode/skills/<name>/SKILL.md` | 64 |
-| **去重后** | | **432** |
+### 4. 元语消歧（此前只有平铺的「术语」表）
 
-- `~/.claude/skills/` 是 229 个指向 `~/.agents/skills/` 的**符号链接**，属镜像，**不重复计数**
-- `~/.codex/skills/` 与 `~/.omp/agent/managed-skills/` 均为空
-- 按**能力**分 30 类（思维/工程/审查/测试/设计/文档/图示/检索/浏览器/Git/科研/生信/化学/ML/
-  数据/科学计算/地理 + CLI-Anything 10 组 + Nature/GStack/Doko 三系列）
-- **描述取自技能自身 `description` 字段**，仅压缩长度不改语义
-- 校验：列出的 432 个 = 实际的 432 个，**零幽灵、零遗漏**；分类计数与行数全部自洽
+- `projectbrief.md` 新增**业务层核心元语**表（记录 / 语言 / 设备 / 统计 / 同步 / 时长 / 多设备），
+  每行给出「本项目的确定含义」与「易混的其它含义」
+- 三个 `meta.md` 的「术语」升级为「元语与消歧」，补 **别名** 与 **非同义词** 两列。
+  最要紧的一条在 `sync-client`：**游标 / watermark / push 响应的 nextCursor 三者必须区分**，
+  混用会导致永不收敛
 
-### 新增 R30：SKILL_GRAPH.md 维护
+### 5. 漂移检测与自动化边界（此前只有一句「就地改正」）
 
-把「只列真实存在的技能」固化为规则：禁止幽灵条目、`~/.claude/` 不重复计数、
-描述不得编造、计数必须自洽，并给出可重跑的 `comm` 校验命令。
+R31 明确触发条件（契约变更 / 版本升级 / **实测与记录不符** / 关联仓库改动 / 里程碑收尾）与动作
+（确认来源 → 回源核对 → 就地改正 → 无法确认的标 `待确认` 并写明缺什么证据，**不删不猜**）。
+**自动化边界**：自动化只负责发现变化、生成候选、阻止遗漏；契约语义与兼容理由**必须由人确认**，
+不得让「代码变了」自动改写领域知识。
 
-### 补齐非 AI 项目内容
+### 6. 架构层补实（顺带修复的结构性缺陷）
 
-| 文件 | 内容 |
-|---|---|
-| `README.md` | 重写（原为 VS Code 模板残留 + 重复 H1）：定位、family 关系、规划中的功能、依赖、开发命令、里程碑、协议 |
-| `CONTRIBUTING.md` | 环境准备、F5 调试、命令表、代码规范（含 VS Code 特有陷阱）、提交信息、PR 流程、Bug/需求报告、隐私与安全 |
-| `CODE_OF_CONDUCT.md` | Contributor Covenant 2.0（沿用插件端，联系邮箱一致） |
-| `SECURITY.md` | 支持版本、私下报告流程、**本仓库的范围界定**（凭据必须进 SecretStorage、数据默认不外发、范围外事项） |
-| `LICENSE` | **MIT**（用户选定；与 ctt-web / ctt-server 一致） |
-| `CHANGELOG.md` | Keep a Changelog 格式 + 比较链接 |
+`domains/README.md` 把「架构层」指向 `systemPatterns.md` 的关系图，但那张图只有三行 ASCII。
+已补实为：体系图 + **读写分离数据流表**（写路径 `sync-client` / 读路径 `server-api` / 本地统计）
++ 归属与影响面问答表 + 三条不可越界约束。
 
-### 记录三项架构决策
+### 同步调整
 
-写入 `techContext.md`「已决」，含由「同一个库」直接推出的 6 条强制后果与 4 项待细化事项。
+- `AGENTS.md`：新增「知识地图」路由段（做什么 → 先读 → 再读）；修复文件头一处残缺句；
+  尾段「记忆库结构」由重复 R29 内容改为索引表并指向 `domains/README.md`
+- 新增 **R31**；规则总数 30 → **31**，编号仍升序无重复
 
-**状态**：✅ 文件已建立。**待授权提交**。
+**验证**：31 条规则升序唯一；零悬空引用；40 条相对链接全部可解析；15 个领域文件页头齐全；
+记忆文件最大 145 行（限 200）。
+
+**状态**：✅ 已完成。**待授权提交**。
 
 ---
 
-## [2026-09-14] AI 协作架构初始化（第一轮）
+## [2026-09-14] 第一、二轮（已完结，细节见 `progress.md`）
 
-**背景**：本仓库是 `../code-time-tracker`（JetBrains 插件）的衍生项目，仅有 VS Code 扩展脚手架。
+两次初始化的**过程细节**已沉入 `progress.md`（里程碑）与 `.omp/plans/ai-architecture-plan.md`
+（决策与审查记录）。此处只留**当前仍生效的结论**：
 
-**研究**（5 个 scout 子 agent 并行，只读）：
-
-| 调查项 | 关键产出 |
-|---|---|
-| ctt-server AI 架构 | 28 条规则、memory-bank 两层结构、archive 按月分片、`.omp/` 产物约定、commit/branch 政策 |
-| ctt-web AI 架构 | 26 条规则、domains 4 领域、`.omp/README.md` 权威说明、3 条规则带事故记录 |
-| code-time-tracker AI 架构 + 产品 | 28 条规则、`CodingSession` 12 字段、`sync_cursor`/`app_user` 表、同步 A–E 阶段全部已实现 |
-| ctt-server 同步/认证契约 | 端点/DTO 字段级验证，发现 **8 处文档 vs 源码不一致** |
-| ctt-server 统计契约 | 会话唯一入口是 sync push；三种时长语义（merge/accumulate/average）；`timezoneOffset` 参数名纠正 |
-
-**建立的文件**：`AGENTS.md`（R1–R30）、`memory-bank/`（时间线 5 文件 + 3 领域 × 5 件套 +
-`domains/README.md`）、`.omp/`（`README.md` + 计划）、`.editorconfig`、`.gitmessage`、`.gitignore`。
-
-**规避的兄弟仓库缺陷**（**未修改任何关联项目文件**）：兄弟仓库的 **R5/R6.5 自相矛盾**、
-规则编号乱序、技术规范混入规则集、`SKILL_GRAPH.md` 漂移、`.opencode/` 忽略语义陷阱。
-
-**服务端契约落库**（源码验证，非文档转抄）：
-
-- `sync-client`：LWW 固定优先级链、游标数学（`max(watermark, clientCursor)`）、
-  批内原子性、失败可重试语义、`origin_device_id` 与 `updated_by_device_id` 的区别、
-  **push 响应的 `nextCursor` 不得用作 pull 起点**（会跳过本次 push 的 change）
-- `server-api`：两种错误体形状（`$.code` vs `$.data.code`）、`non_null` 导致 null 字段缺失、
-  429 双信号重试契约、`AUTH_021` 与 `SYSTEM_003` 均从未被抛出、
-  `DELETE /devices/{id}` 实为 200（非文档所称 204）、`GET /users/me` 无 scope 注解
-
-**双轴独立审查（逻辑 + 风格，互相不可见）**：首轮均判 FAIL，共 3 个 blocker + 多项 major，
-已逐条核实并全部修复：
-
-- **blocker** 同步循环把 push 响应的 `nextCursor` 当作下一轮 pull 起点 → 改为「push 不推进
-  pull 游标」，引用参考实现的 SYNC-CORE-DESIGN 决策 #1
-- **blocker** R6 提交前自检缺 memory-bank 豁免项（与 R5/R7 死锁）→ 恢复豁免项
-- **blocker** 领域知识库无编号规则且被误引为 R28 → 新增 **R29: 领域知识库**
-- **blocker** `references.md` 中 `_HttpClient`、`SecretStore` 两个不存在的标识符 → 改为真实标识符
-- 其余 major：`DisposableStore` 非公开 API、Node16 `.js` 后缀说法不成立（已实测）、
-  R13/R22 日志矛盾、30/90 天双阈值、`week-hour` 语义归属、`.opencode/.gitignore` 自忽略陷阱、
-  R5/R7 重复陈述、`.omp/README.md` 规则引用错号
-
-审查中**未采纳**一条：报告称 `../code-time-tracker` 无 E 阶段，但该仓库
-`activeContext.md:126` 记录了 E phase（其 `progress.md` 反而滞后——正是 P10 描述的陈旧记忆）。
+- **AI 协作架构**（第一轮）：建立 `AGENTS.md`（规则集，现为 R1–R31）、`memory-bank/`（时间线 5 文件 +
+  3 领域 × 5 件套）、`.omp/` 工作目录约定、`.editorconfig` / `.gitmessage`。契约事实**逐条核对
+  ctt-server 源码**，发现并记录 8 处文档与源码不一致。双轴独立审查（逻辑 + 风格）首轮均 FAIL，
+  3 个 blocker 全部修复——含「push 游标误用作 pull 起点会导致永不收敛」这一条。
+- **移除 `.opencode/`**：boot/save 是插件端早期机制，当前工具链不需要；会话初始化改由 R1 约束。
+  **本仓库永久不设该目录。**
+- **`SKILL_GRAPH.md` 重建**：旧索引有 68 个幽灵条目。从文件系统重新测绘
+  **432 个技能**（`~/.agents/skills` 368 + `~/.config/opencode/skills` 64，去重后），
+  按能力分 30 类，描述取自技能自身 `description`。零幽灵、零遗漏。由 **R30** 治理。
+- **非 AI 项目内容补齐**：`README.md`（重写）、`CONTRIBUTING.md`、`CODE_OF_CONDUCT.md`、
+  `SECURITY.md`、`LICENSE`（**MIT**）、`CHANGELOG.md`。
+- **三项架构决策**（写入 `techContext.md`「已决」）：与插件端**同一个 SQLite 库**
+  （`~/.config/code-time-tracker/coding_data.db`，已核实含真实数据）、**统计语义照 JetBrains 对齐**
+  （须建语言字典）、**插件端做独立本地统计**。
 
 ---
 
