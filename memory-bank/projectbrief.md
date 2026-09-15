@@ -69,7 +69,7 @@ VS Code 扩展：自动追踪编码时间并提供统计分析。与 `../code-ti
   `../code-time-tracker` 是**同一个**；**schema 变更权归插件端独占**——本插件不迁移、不加列，
   需要新列时走需求报告；本地库**只存原生值**，两端可能并发写
 - **语言字段原样发送**：发 `document.languageId` 的原始值，**不做大小写转换、不做命名美化**；
-  归一化（GitHub Linguist 规范名 + 历史回填）由服务端统一承担。**本地不得自建映射表**
+  归一化（GitHub Linguist 规范名，**读取时进行**）由服务端统一承担。**本地不得自建映射表**
 - **只读关联项目**：`ctt-server` / `ctt-web` / `code-time-tracker` 一律只读（AGENTS.md R3）
 
 ## 里程碑

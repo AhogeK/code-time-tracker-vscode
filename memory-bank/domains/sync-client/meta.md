@@ -55,7 +55,7 @@ Kotlin，A–E 阶段全部落地并 E2E 验证）。**严禁修改**（AGENTS.m
 - **`sessionUuid` 是跨端身份**：与 JetBrains 插件共用同一个本地库时，两端必须用同一套
   UUID 规则，否则同一会话会被当成两条（见 `../README.md` 的本地库约束）
 - **语言字段原样转发**：送 `document.languageId` 的原始值，**本地不做任何归一化**——
-  归一化与历史回填由服务端承担（见 `principles.md` P10）
+  归一化由服务端在**读取时**承担（见 `principles.md` P10）
 
 ## Where to start
 

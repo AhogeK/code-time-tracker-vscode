@@ -34,7 +34,7 @@ grep 代码，会把同名不同义的概念混在一起，方案从第一步就
 | ctt-server 当前行为 | `../ctt-server` **源码** | 它的文档与 memory-bank（已发现 8 处不一致） |
 | 本地库 schema | `../code-time-tracker` 的 `database/MigrationManager.kt` | 本仓库的转述 |
 | 统计口径 | ctt-server `StatsCalculator` + 插件端显示语义 | 文档里的口径描述 |
-| **语言归一化规则** | **ctt-server**（GitHub Linguist 规范名，含历史回填） | 本仓库或插件端的本地映射表 —— **不存在也不得建立** |
+| **语言归一化规则** | **ctt-server**（GitHub Linguist 规范名，**读取时归一化**） | 本仓库或插件端的本地映射表 —— **不存在也不得建立** |
 | 本仓库当前行为 | 本仓库代码 + 配置 | 记忆文件 |
 | 产品意图与取舍 | **用户确认过的结论** | 代码现状、旧文档 |
 | 历史原因 | 领域 `practices.md` 的可追溯记录 | 推测 |

@@ -38,10 +38,11 @@
 | 信封 | 成功响应外层 `RestApiResponse{success,message,data,timestamp}` | 「返回体」「响应」 | **错误体** `ErrorResponse` —— 形状不同，没有 `success`/`data` |
 | 错误码位置 | code 出现在 JSON 的哪一层 | 「错误码」 | **`$.code` 与 `$.data.code` 是两条路径**：处理器路径在前者，过滤器路径在后者；只读一个会在「凭据坏了」时拿到 `undefined` |
 | 统计 | 服务端聚合出来的权威数值 | 「数据」「报表」 | **本地近似值** —— 本仓库自己算的那份，两者**允许不等**（P7） |
-| 语言 | 服务端 `language` 字段的取值 | 「语言」 | **发送时是原生 `languageId`**（`typescript`）—— **不得在本地做大小写转换或命名美化**；归一化由服务端按 GitHub Linguist 规范名统一承担并回填历史（见 `practices.md`） |
+| 语言 | 服务端 `language` 字段的取值 | 「语言」 | **发送时是原生 `languageId`**（`typescript`）—— **不得在本地做大小写转换或命名美化**；归一化由服务端按 GitHub Linguist 规范名统一承担，且在**读取时**进行（见 `principles.md` P10） |
 | 时区参数 | `timezoneOffset`，**UTC 以东的分钟数** | 「时区」「zone」 | 时区名（`Asia/Shanghai`）、偏移字符串（`+08:00`）—— 都**不可用** |
 | plugin parity | 口径由插件定义、**服务端为裁决者** | 「一致性」 | **「两端数字必须相等」不是它的含义** —— 类别维度本就允许不等（P4） |
-| merge / accumulate / average | 三类时长语义 | 「时长」 | 三者**不可互相比较**；把 accumulate 归一化成 merge 是缺陷，不是修复 |
+| merge / accumulate / average | 三类时长语义 | 「时长」 | 三者**不可互相比较**；**把 accumulate 合并成 merge 是缺陷，不是修复**（P4） |
+| **归一化** ⚠️ | **本领域有两个互不相干的含义，禁止裸用** | 「归一」「规范化」 | ① **语言名归一化**：把各 IDE 的原始标识符映射到 Linguist 规范名，**服务端做，客户端不碰**（P10）<br>② **时长语义归一化**：把 accumulate 合并成 merge —— **这是缺陷**（P4）<br>写的时候必须点名是哪一个 |
 
 ### 边界
 

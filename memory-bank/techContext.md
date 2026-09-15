@@ -68,27 +68,42 @@ out/                      # 测试编译产物（gitignore）
 
 | 议题 | 决定 | 依据 |
 |---|---|---|
-| **本地存储** | 与 `../code-time-tracker` **同一个 SQLite 文件**，数据共通；**schema 由插件端独占管理** | 用户指示（2026-09-14）+ 后端方向（2026-09-15） |
-| **语言字段** | **发送 VS Code 原生 `document.languageId`**（如 `typescript`）**原样**，不做大小写转换、不做命名美化；归一化由 ctt-server 统一承担 | 后端方向（2026-09-15） |
-| **本地统计** | 插件端**也做**与 JetBrains 插件类似的 IDE 端独立统计 | 用户指示（2026-09-14） |
+| **本地存储** | 与 `../code-time-tracker` **同一个 SQLite 文件**，数据共通；**schema 由插件端独占管理** | 用户指示 + 后端方向 |
+| **语言字段** | **发送 VS Code 原生 `document.languageId` 原值**（如 `typescript`），不做大小写转换、不做命名美化；归一化由 ctt-server 统一承担 | 后端方向 + **源码已核实**（见下） |
+| **本地统计** | 插件端**也做**与 JetBrains 插件类似的 IDE 端独立统计 | 用户指示 |
 
-### 语言字段：两端各持一套规则必然漂移
+### 语言字段：已由服务端源码核实（v0.74.2）
 
-**本插件不做任何语言归一化。** 具体含义：
+**本插件不做任何语言归一化。** 服务端已实现，实现位置
+`../ctt-server/src/main/java/com/ahogek/cttserver/language/`（`LanguageVocabulary` +
+`CanonicalLanguage` + `LanguageType`，词表为资源文件 `resources/language/vocabulary.json`）。
 
-| 层 | 做什么 |
-|---|---|
-| 采集 | 取 `document.languageId` 的**原始值** |
-| 发送 | 把原始值原样放进 `SyncSessionDto.language` |
-| 本地库 | 存**原生值**（与插件端写入的值各自独立，见下） |
-| 展示 | **展示时才归一化**，不是在写入时 |
-| 归一化本身 | **服务端拥有**：以 GitHub Linguist 规范名归一化，并回填历史数据 |
+**跑通服务端真实算法后的对照**（`key()` = `strip().toLowerCase()`）：
 
-**为什么不能在本地做**：服务端会按 Linguist 规范名归一化并回填历史；两端各持一套映射规则，
-**必然漂移**。等对接文档的同时，本插件的正确做法是「什么都不知道，只管原样发送」。
+| 送进去 | 归一为 | 类型 |
+|---|---|---|
+| `typescript` / `TypeScript` / `TYPESCRIPT` | `TypeScript` | programming |
+| `java` / `JAVA` | `Java` | programming |
+| `kotlin` / `Kotlin` / `KOTLIN` | `Kotlin` | programming |
+| **`ignore`（VS Code）与 `GitIgnore file`（JetBrains）** | 都 → `Ignore List` | data |
+| `shellscript` | `Shell` | programming |
+| `textmate` / `ARCHIVE` | `Other`（已知非语言，合并） | OTHER |
 
-**词表快照**：格式与对接细节**待服务端实现落地后由后端提供完整对接文档**
-（状态：待确认 —— 未收到文档前不得自行设计格式）。
+**三种归一路径**（`LanguageVocabulary.normalize`）：
+
+1. **已知非语言**（`textmate`、`archive`）→ 合并进 `Other`
+2. **已知语言**（canonical 或 aliases，大小写与首尾空白不敏感）→ 返回规范名 + 类型
+3. **未识别** → **原样保留**并标 `recognized=false`，服务端记 WARN 日志等待分类
+   —— **不会**被并进 `Other`，以免新语言被埋进没人看的桶
+
+**归一化发生在读取时**（`StatsCalculator.languageDistribution` 在查询期调用
+`vocabulary.normalize(...)`），**不是写入时**。这正是「历史数据无需回填」的实现方式：
+存量行里的原始值在查询期同样被归一化。
+
+**词表快照**：`VocabularyFile(version, canonical, aliases, nonLanguages)`，
+当前 `version: 1`、92 个规范名、75 个别名、76 个非语言值。
+**尚未通过 HTTP 暴露**（无对应端点；`unmappedValues()` 有意不公开——它是全局集合，
+而其余读接口按用户隔离）。状态：**待确认**——对接文档未到前不得自行设计格式。
 
 ### 由「同一个库」推出的强制后果
 
@@ -105,8 +120,11 @@ out/                      # 测试编译产物（gitignore）
    **需要新列时**：走需求报告给插件端（R3），**不自行加**。两端各自迁移 = schema 漂移，
    而漂移的代价是**两个 IDE 读到对方的库时崩溃或静默丢数据**。
 
-3. **本地库只存原生值** —— 归一化一律推到展示时进行。写入时归一化会使原始事实不可恢复，
-   且与服务端的回填结果打架
+   **语言归一化不涉及 schema 变更**（后端已确认）：`coding_sessions.language` 保持
+   `VARCHAR(50) NOT NULL` **存原样值**，归一化在读取时进行。本插件无需协调迁移。
+
+3. **本地库只存原生值** —— **语言名**归一化一律推到展示时进行。写入时归一化会使原始事实
+   不可恢复，且与服务端的归一化结果打架（服务端在**读取时**归一化，不依赖列里存的是规范名）
 
 4. **并发写入**：两个 IDE 可能同时打开同一 SQLite 文件，必须按 SQLite 锁语义设计
    （WAL 模式 + 忙等待重试）
@@ -121,7 +139,8 @@ out/                      # 测试编译产物（gitignore）
 
 - SQLite 接入方式（`node:sqlite` 内置 / `better-sqlite3` 原生模块 / WASM）—— 涉及打包体积与原生依赖，属 R14 依赖决策
 - 空闲检测阈值与插件端是否一致（影响会话切分口径）
-- 语言词表快照的对接（**等后端文档**，见上）
+- **词表快照的对接**（`VocabularyFile{version, canonical, aliases, nonLanguages}`）——
+  服务端**尚未通过 HTTP 暴露**，等后端对接文档；**文档未到前不得自行设计格式**
 
 ## 依赖变更记录
 

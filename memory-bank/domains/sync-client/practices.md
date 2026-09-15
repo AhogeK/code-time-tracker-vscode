@@ -68,10 +68,27 @@ deleted          boolean       软删除标记
 
 - ❌ **不做大小写转换、不做命名美化**（不要发 `TypeScript`）
 - ❌ **不自建映射表**，不查本地词表
-- ✅ 归一化**由服务端承担**：按 GitHub Linguist 规范名归一化，并**回填历史数据**
+- ✅ 归一化**由服务端承担**（`LanguageVocabulary`，GitHub Linguist 规范名）
 
-理由：服务端会在归一化后回填历史；两端各持一套映射规则**必然漂移**。
-本地做什么都是错的——**唯一正确的动作是什么都不做，原样转发**。
+**服务端真实算法的对照**（已跑通源码验证，v0.74.2）——看清楚为什么本地什么都不用做：
+
+| 送进去 | 服务端归一为 |
+|---|---|
+| `typescript` / `TypeScript` / `TYPESCRIPT` | `TypeScript` |
+| `java` / `JAVA` | `Java` |
+| `kotlin` / `Kotlin` / `KOTLIN` | `Kotlin` |
+| **`ignore`（VS Code 语言）与 `GitIgnore file`（JetBrains 文件类型）** | 都 → `Ignore List` |
+| `shellscript` | `Shell` |
+| `textmate` / `ARCHIVE` | `Other`（已知非语言） |
+
+大小写与首尾空白**都不敏感**（`strip().toLowerCase()`）。**这就是 JetBrains 与 VS Code
+两套命名被合并的方式**——若本地也做一遍，只会与服务端的结果打架。
+
+**未识别的值不会被丢弃**：服务端**原样保留**并标 `recognized=false` + 记 WARN 日志等待分类，
+不会并进 `Other`。所以本地送出不认识的 `languageId` 是**安全的**——那正是新语言被发现的途径。
+
+**归一化发生在读取时**，不是写入时（`StatsCalculator.languageDistribution` 查询期调用）——
+这正是历史数据无需回填的原因。
 
 **不要发送**：时长/秒数、设备名、IDE 名、时区、偏移 —— 服务端自行推导或从注册信息取。
 

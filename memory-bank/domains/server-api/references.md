@@ -1,7 +1,7 @@
 # server-api — references
 
-> 来源：**`../ctt-server` 源码 v0.72.0**（逐条核对；文档与源码不一致处已标注，共 8 处）
-> 最后确认：2026-09-15 ｜ 适用范围：端点 / 错误码 / 信封 / 漂移表 ｜ 状态：**已核实**
+> 来源：**`../ctt-server` 源码**（v0.72.0 起逐条核对；v0.74.2 复查语言归一化）
+> 最后确认：2026-09-16 ｜ 适用范围：端点 / 错误码 / 信封 / 漂移表 ｜ 状态：**已核实**
 
 服务端 Spring Boot 4.1.1，Java 25。**Base URL 含 servlet context path `/ctt-server`**：
 `http://host:8080/ctt-server/api/v1/...`（`application.yaml:60`）
@@ -48,7 +48,7 @@
 
 | type | 语义族 | 说明 |
 |---|---|---|
-| `LANGUAGES` | accumulate | 按 `language` 累加 |
+| `LANGUAGES` | accumulate | 按 `language` 累加；**读取时**用 `LanguageVocabulary` 归一化到 GitHub Linguist 规范名 |
 | `PROJECTS` | accumulate | 按 `projectName` 累加 |
 | `TIME_OF_DAY` | **merge** | 按桶切时间轴 |
 | `WEEKDAY` | accumulate | 键是**星期名**（`MONDAY`），按**起始时刻**的 ISO 星期 |
@@ -139,6 +139,7 @@
 | 统计服务（过滤/来源选择/选项表） | `stats/service/StatsService.java` |
 | 统计计算（纯函数） | `stats/service/StatsCalculator.java` |
 | 信封 | `common/response/{RestApiResponse,ErrorResponse}.java` |
+| **语言归一化** | `language/{LanguageVocabulary,CanonicalLanguage,LanguageType}.java` + 资源 `resources/language/vocabulary.json` |
 | 错误码注册表 | `common/exception/ErrorCode.java` |
 | 异常→响应 | `common/exception/GlobalExceptionHandler.java` |
 | 设备 | `device/{controller,service,dto}/` |
