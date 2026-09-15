@@ -2,8 +2,29 @@
 
 > 本文件由 AI 自动维护，人类请勿手动编辑
 >
-> 语言边界：代码/注释/日志/**README/CHANGELOG/docs** 强制英文；**本文件、`memory-bank/`、
-> **AI 工作文件（本文件、`memory-bank/`、`SKILL_GRAPH.md`）**用中文（AI 与用户的交互语言）。详见 R9。
+> 语言边界：代码/注释/日志/README/CHANGELOG/docs 用英文；**本文件、`memory-bank/`、
+> `SKILL_GRAPH.md`** 用中文（AI 与用户的交互语言）。详见 R9。
+>
+> **本文件只承载约束与路由，不承载事实。** 事实在 `memory-bank/`（结构化知识），
+> 技能在 `SKILL_GRAPH.md`。想在规则文件里找事实，找错地方了。
+
+## 知识地图（先看这里）
+
+| 你要做的事 | 先读 | 再读 |
+|---|---|---|
+| 会话开始 | 本文件（约束） | `memory-bank/` 全部（R1） |
+| **需求消歧**：这个词指什么 | [`projectbrief.md`](memory-bank/projectbrief.md)「核心元语」 | 领域 `meta.md` 的「元语与消歧」 |
+| 定位该改哪个模块 | [`systemPatterns.md`](memory-bank/systemPatterns.md) 体系图 | `domains/*/meta.md` 的 Owned paths |
+| 调用服务端 | [`domains/server-api/meta.md`](memory-bank/domains/server-api/meta.md) | 其 `references.md`（端点 / 错误码） |
+| 实现或调试同步 | [`domains/sync-client/meta.md`](memory-bank/domains/sync-client/meta.md) | 其 `principles.md` → `practices.md` |
+| 提交 / 版本 / 分支 | 本文件 R6 / R7 / R17 / R20 | [`domains/ai-workflow/practices.md`](memory-bank/domains/ai-workflow/practices.md) |
+| 选技能 | `SKILL_GRAPH.md` | `read skill://<skill-name>` |
+| 判断某条知识是否可信 | 领域文件页头的「来源 / 状态」 | [`domains/README.md`](memory-bank/domains/README.md)「事实回源」 |
+
+**阅读路径遵循渐进式披露**（业务层 → 架构层 → 系统层 → 基建层，见
+[`domains/README.md`](memory-bank/domains/README.md)）。**不要从系统层直接起步**——
+在没确认「需求说的是什么」之前就 grep 代码，会把同名不同义的概念混在一起，
+这是「局部正确、整体错误」的主要来源。
 
 ## 核心规则
 
@@ -12,8 +33,16 @@
 每次会话开始，**先读 `AGENTS.md`**（它是约束，不是背景资料），再读 `memory-bank/` 下所有文件
 （projectbrief / techContext / systemPatterns / activeContext / progress），缺失则创建。
 
-识别任务所属**领域**（`memory-bank/domains/`）并读取该领域 `meta.md` → 任务所需的那个文件；
-跳过这一步就是同一个错误重犯的来源：规则只说「不要 X」，而**为什么**与已否决的替代方案在领域文件里。
+然后按**渐进式披露**路径推进，**不要跳层**（完整定义见
+[`domains/README.md`](memory-bank/domains/README.md)）：
+
+1. **消歧**（业务层）—— 需求里的词在本项目指什么 → `projectbrief.md`「核心元语」+ 领域 `meta.md`
+2. **定位**（架构层）—— 涉及哪些模块与契约 → `systemPatterns.md` 体系图 + `domains/*/meta.md` 的 Owned paths
+3. **深入**（系统层）—— 该领域的 `principles.md`，再按需 `scenarios` / `practices` / `references`
+4. **基建层** —— 提交、版本、分支规则见本文件 R6 / R7 / R17 / R20
+
+**跳过第 1 步就 grep 代码，会把同名不同义的概念混在一起**——这是「局部正确、整体错误」的主要来源。
+跳过第 3 步则是同一个错误重犯的来源：规则只说「不要 X」，而**为什么**与已否决的替代方案在领域文件里。
 
 ### R2: 记忆更新（强制实时）
 
@@ -455,11 +484,57 @@ comm -3 \
 **与 R19 的关系**：`~/.agents/skills/` 下的技能文件本身仍受 R19 保护（只读、不修改）；
 本规则管的是**索引**（本仓库内的 `SKILL_GRAPH.md`），不是技能本体。
 
+### R31: 知识回源与漂移检测（强制）
+
+**核心原则：不同事实回不同源；知识过期比知识缺失更危险**——过期的知识会以「看起来很可信」
+的方式误导判断，而缺失至少会让人去查。
+
+#### 回源裁决（冲突时按下表，不得越级）
+
+| 事实类型 | 权威来源 |
+|---|---|
+| ctt-server 当前行为 | `../ctt-server` **源码** |
+| 本地库 schema | `../code-time-tracker` 的 `database/MigrationManager.kt` |
+| 本仓库当前行为 | 本仓库代码 + 配置 |
+| 产品意图与取舍 | **用户确认过的结论** |
+| 历史原因 | 领域 `practices.md` 的可追溯记录 |
+
+**红线**：不得因为代码实现了某种行为，就把它当作未来需求的正确业务规则；
+也不得因为旧文档写过某种设计，就忽略代码已经变了。完整表见
+[`domains/README.md`](memory-bank/domains/README.md)「事实回源」。
+
+#### 状态标记
+
+领域文件页头**必须**携带 `来源 ｜ 最后确认 ｜ 适用范围 ｜ 状态`，状态三选一：
+
+| 状态 | 可作依据？ |
+|---|---|
+| `已核实` | ✅ 已回源确认 |
+| `待确认` | ⚠️ 有来源但未核实 —— **不得静默升级为领域事实** |
+| `已过时` | ❌ 与当前事实不符，保留用于追溯 |
+
+**读领域文件先看状态。** 把 `待确认` 的内容当结论使用，是本规则要防的主要错误。
+
+#### 漂移检测
+
+**触发**：契约变更 / 版本升级 / **实测与记录不符**（最强信号）/ 关联仓库改动 /
+每个里程碑收尾时校准一次。
+
+**动作**：`git log` 确认变更来源（R10 变更溯源）→ 回源核对 → **就地改正**领域文件
+（不留过时判断，R15）→ 无法当场确认的标记 `待确认` 并写明**缺什么证据**
+（**不得删除、不得猜测**）→ 记录到 `activeContext.md`。
+
+#### 自动化边界
+
+自动化只负责**发现变化、生成候选、阻止遗漏**；契约语义、历史兼容理由这类高风险判断
+**必须由人确认**后才写入领域文件。**不得让「代码变了」自动改写领域知识**——
+工具守的是「代码变了、知识不能完全不变」的底线，语义判断仍然归人。
+
 ## 执行流程
 
-会话开始 → 读 AGENTS.md + memory-bank + 识别领域 → 创建 todo（如需）→ 处理请求 →
-代码修改 + 版本号更新（R17）+ 编辑验证（R9）→ 清理临时文件（R13/R22）→
-更新记忆（R2）+ 行数修剪（R15）→ 提交前审查 + Git 授权（R6）
+会话开始 → 读 AGENTS.md + memory-bank → **需求消歧 + 回源核对**（R31）→ 识别领域 → 创建 todo（如需）→
+处理请求 → 代码修改 + 版本号更新（R17）+ 编辑验证（R9）→ 清理临时文件（R13/R22）→
+更新记忆（R2）+ 行数修剪（R15）+ **漂移检查**（R31）→ 提交前审查 + Git 授权（R6）
 
 ## 约束
 
@@ -474,16 +549,12 @@ comm -3 \
 
 ## 记忆库结构
 
-**时间线层**（回答「现在 / 最近发生了什么」）：
+| 层 | 位置 | 回答 | 治理 |
+|---|---|---|---|
+| **时间线层** | `memory-bank/*.md`（5 文件）+ `archives/` | 「现在 / 最近发生了什么」 | R2、R15 |
+| **领域层** | `memory-bank/domains/<domain>/`（五件套） | 「这里什么是真的、该怎么做」 | **R29** |
+| **横切规范** | `memory-bank/systemPatterns.md` | 命名、线程模型、VS Code 宿主 API 用法 | R11 |
 
-`memory-bank/`：`projectbrief.md`（目标）、`techContext.md`（技术栈）、`systemPatterns.md`（横切规范）、
-`activeContext.md`（当前）、`progress.md`（进度）、`archives/`（冻结的历史，按需建立，唯一豁免行数限制）
-
-**领域层**（回答「这里什么是真的、该怎么做」，**R29 治理**）：
-
-`memory-bank/domains/<domain>/` —— 每领域五件套 `meta.md`（边界）/ `principles.md`（不变量）/
-`scenarios.md`（触发→判断→动作）/ `practices.md`（做法与坑）/ `references.md`（事实查表）；
-入口 `domains/README.md`。文件集、生长规则与红线详见 **R29**。
-
-横切规范（命名、错误处理、VS Code 宿主 API 用法）留 `systemPatterns.md`；
-领域专属判断进领域文件，**不得两处重复**。
+领域文件集、生长规则、**元数据契约（来源 / 新鲜度 / 状态）**与**四层阅读路径**见
+[`memory-bank/domains/README.md`](memory-bank/domains/README.md)；此处不重复——
+同一约束在两处表述必然漂移（R16）。
