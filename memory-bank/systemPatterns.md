@@ -138,6 +138,13 @@ src/**.ts  --tsc -p . --outDir out-->                                out/**     
 2. **只存原生值，语言名归一化在展示时做。** 写入时归一化会让原始事实不可恢复，
    并与服务端的归一化结果打架（例：`language` 存 `document.languageId` 原值，
    展示时才映射成可读名）。
+   **本地统计查询需要一份内置词表**才能合桶（否则本地与网页数字对不上）——
+   已置于 `src/language/vocabulary.json`，规格见
+   [`domains/server-api/references.md`](domains/server-api/references.md)「语言词表」。
+   先例：插件端在 `StatsRepository` 查询期调用 `LanguageVocabulary.normalize()`。
+
+   **该 JSON 是「金标准副本」**：哈希测试钉的是源文件本身。`tsc` / esbuild 都会**重新
+   序列化**它，所以构建产物与源文件**不等长**——「逐字节一致」只对仓库内的文件成立。
 3. **按 SQLite 锁语义设计并发。** 两个 IDE 可能同时打开同一文件：WAL 模式 + 忙等待重试。
 
 ### 三条不可越界的约束

@@ -100,10 +100,32 @@ out/                      # 测试编译产物（gitignore）
 `vocabulary.normalize(...)`），**不是写入时**。这正是「历史数据无需回填」的实现方式：
 存量行里的原始值在查询期同样被归一化。
 
-**词表快照**：`VocabularyFile(version, canonical, aliases, nonLanguages)`，
-当前 `version: 1`、92 个规范名、75 个别名、76 个非语言值。
-**尚未通过 HTTP 暴露**（无对应端点；`unmappedValues()` 有意不公开——它是全局集合，
-而其余读接口按用户隔离）。状态：**待确认**——对接文档未到前不得自行设计格式。
+**词表快照**：`VocabularyFile(version, canonical, aliases, nonLanguages)`。
+**不是 HTTP 接口，而是各客户端内置的逐字节副本**（先例：插件端
+`src/main/resources/language/vocabulary.json` + `util/LanguageVocabulary.kt`）。
+当前 **v2**：canonical 842 / aliases 489 / nonLanguages 76，
+sha256 `be7de60211d7604b68a70bcb399b8252f5d4a51576a88100f995fb9a43a8ea04`。
+完整规格（版本沿革、核对方式、v1→v2 的方向性错误）见
+[`domains/server-api/references.md`](domains/server-api/references.md)「语言词表」。
+
+**用途只有一处**：本地统计查询期合桶（与插件端一致），**不用于上报**。
+未识别的值由服务端保留并记 WARN，不会丢。
+
+**已接入**（2026-09-17，用户选定「内联进 bundle」）：
+
+| 项 | 值 |
+|---|---|
+| 位置 | `src/language/vocabulary.json` |
+| 接入方式 | `tsconfig.json` 开 `resolveJsonModule`，import 后由 esbuild 内置 JSON loader 内联 |
+| 一致性 | `src/test/vocabulary.test.ts` 钉住 sha256 + 大小 + 计数 + v2 新增语言 + 分类合法性 |
+| 打包 | `.vscodeignore` 已含 `src/**` 与 `out/**`，词表不会作为独立文件进 VSIX |
+
+**关键细节：`逐字节一致」指仓库里的源文件，不是构建产物。** `tsc` 会**重新序列化** JSON
+（39845 → 45488 字节），esbuild 内联时同样会重新生成。因此哈希测试钉的是
+`src/language/vocabulary.json` 本身，而运行时拿到的对象是等价但非逐字节相同的表示。
+
+**当前状态**：`dist/extension.js` **尚未包含**词表——没有任何代码 import 它。
+esbuild 的 JSON loader 是内置的，本地统计层一旦 import 即自动内联，**无需改 esbuild 配置**。
 
 ### 由「同一个库」推出的强制后果
 
@@ -139,8 +161,8 @@ out/                      # 测试编译产物（gitignore）
 
 - SQLite 接入方式（`node:sqlite` 内置 / `better-sqlite3` 原生模块 / WASM）—— 涉及打包体积与原生依赖，属 R14 依赖决策
 - 空闲检测阈值与插件端是否一致（影响会话切分口径）
-- **词表快照的对接**（`VocabularyFile{version, canonical, aliases, nonLanguages}`）——
-  服务端**尚未通过 HTTP 暴露**，等后端对接文档；**文档未到前不得自行设计格式**
+- **本地统计层的实现**（含词表读取形状：是否需要 `nonLanguages`、`aliases`）——
+  词表已就位，消费方待建
 
 ## 依赖变更记录
 

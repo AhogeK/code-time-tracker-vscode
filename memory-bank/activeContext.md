@@ -26,7 +26,7 @@
 |---|---|---|
 | 1 | **语言字段发原生值**：发 VS Code `document.languageId`（`typescript`），**不做大小写转换、不做命名美化**；跨端归一化由 ctt-server 统一承担（GitHub Linguist 规范名） | **本地不得自建映射表或词表**。**已由服务端源码核实**（`ctt-server/language/` 包，v0.74.2）：`ignore` 与 `GitIgnore file` 都归一为 `Ignore List` |
 | 2 | **共用 SQLite 时 schema 由 JetBrains 插件统一管理** | 本插件**不得迁移、不得新增列、不得改约束**；需要新列走需求报告给插件端。本地库**只存原生值**，语言名归一化推到展示时进行 |
-| 3 | 词表快照：`VocabularyFile{version, canonical, aliases, nonLanguages}`，当前 v1（92 规范名 / 75 别名 / 76 非语言值），**尚未通过 HTTP 暴露** | 对接文档未到 → 状态 `待确认`，**不得自行设计格式** |
+| 3 | **词表是各客户端内置的逐字节副本**，非 HTTP 接口。**本仓库已接入** `src/language/vocabulary.json`（v2：842 / 489 / 76，sha256 `be7de602…a8ea04`） | 用途**只有本地统计查询期合桶**，**不用于上报**。哈希由 `src/test/vocabulary.test.ts` 钉住。规格见 `domains/server-api/references.md`「语言词表」 |
 | 4 | **本次无 schema 变更**，语言列继续存原样值 | 已核实：`coding_sessions.language` 保持 `VARCHAR(50)`，无新迁移；归一化在**读取时**发生 |
 
 **这推翻了此前记录的一条判断。** 早先我们写的是「语言标识需与插件端使用同一套命名

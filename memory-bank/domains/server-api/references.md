@@ -131,6 +131,34 @@
 
 对应的客户端动作见 `principles.md` P9。
 
+## 语言词表（客户端各自内置副本）
+
+服务端以此词表归一化语言；按既有约定，**每个客户端各自内置一份逐字节副本**
+（先例：`../code-time-tracker` 放在 `src/main/resources/language/vocabulary.json`）。
+
+| 项 | 值 |
+|---|---|
+| 当前版本 | **v2** |
+| sha256 | `be7de60211d7604b68a70bcb399b8252f5d4a51576a88100f995fb9a43a8ea04` |
+| 大小 | 39845 字节 |
+| 结构 | `version` / `canonical`（规范名 → Linguist 分类）/ `aliases`（小写原值 → 规范名）/ `nonLanguages`（小写原值） |
+| 规模 | canonical **842** / aliases **489** / nonLanguages **76** |
+| 核对 | `shasum -a 256` —— **不要靠肉眼看 JSON** |
+
+**v1 → v2 修的是方向性错误，不是「补了 750 种语言」**：v1 从「本机能枚举到的 IDE fileType」
+反推，把**某台机器装了什么当成了语言全集**。后果是 Elixir / Erlang / Haskell / OCaml / Scala /
+Solidity / Svelte / Nix / Zig / Nim / Astro / Fortran / COBOL / Pascal / Ada 等
+**750 种真实语言在服务端根本不存在**。客户端送这些值会得到「未知语言」，
+读起来像「服务端不认识它」——**真相是词表里从来没有它**。
+
+v2 改为**词表 = 标准本身**（GitHub Linguist 全集 + 7 个本地扩展，如 DTD / Kconfig / XPath），
+机器相关的只剩别名表（客户端的命名差异确实在那里）。
+
+**不刷新的后果是渐变式不一致**：不会崩，但**本地视图不会合桶，本地统计与网页统计对不上**。
+
+**客户端只用它做本地展示/统计**，不用于上报——上报始终是原始值（见
+[`../sync-client/principles.md`](../sync-client/principles.md) P10）。
+
 ## 代码映射
 
 | 关注点 | 文件 |
