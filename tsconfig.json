@@ -12,6 +12,10 @@
         "sourceMap": true,
         "rootDir": "src",
         "strict": true, /* enable all strict type-checking options */
+        /* The language vocabulary is vendored as JSON so it stays byte-identical to the
+           copy ctt-server and the JetBrains plugin hold; esbuild inlines it into the
+           bundle via its built-in JSON loader. */
+        "resolveJsonModule": true,
         /* Additional Checks */
         // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
         // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
