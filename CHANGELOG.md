@@ -5,6 +5,17 @@ All notable changes to the Code Time Tracker VS Code extension are documented he
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-09-17
+
+### Added
+
+- Vendored the ctt-server language vocabulary (`src/language/vocabulary.json`, v2:
+  842 canonical languages / 489 aliases / 76 non-language values) so local statistics can
+  merge languages the same way the server does. The file is kept byte-identical to the
+  server's copy; its sha256 is pinned by `src/test/vocabulary.test.ts`.
+- `resolveJsonModule` in `tsconfig.json`, so the vocabulary can be imported and esbuild
+  inlines it into the bundle.
+
 ## [0.1.0] - 2026-09-14
 
 Project foundation. No tracking behaviour yet — this release establishes the
@@ -21,5 +32,6 @@ repository, toolchain, and community baseline.
   and `SECURITY.md`
 - Project `README.md` describing scope, requirements, and milestones
 
-[Unreleased]: https://github.com/AhogeK/code-time-tracker-vscode/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/AhogeK/code-time-tracker-vscode/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/AhogeK/code-time-tracker-vscode/releases/tag/v0.1.1
 [0.1.0]: https://github.com/AhogeK/code-time-tracker-vscode/releases/tag/v0.1.0
